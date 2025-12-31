@@ -46,7 +46,7 @@ pub fn run_drm(event_loop: &mut EventLoop<'static, VibeWM>, state: &mut VibeWM) 
                 tracing::info!("Session paused");
             }
         })
-        .context("Failed to insert session source")?;
+        .map_err(|e| anyhow::anyhow!("Failed to insert session source: {:?}", e))?;
 
     // Initialize udev for device discovery
     let udev_backend = UdevBackend::new(session.seat())
@@ -64,7 +64,7 @@ pub fn run_drm(event_loop: &mut EventLoop<'static, VibeWM>, state: &mut VibeWM) 
         session.clone().into(),
     );
     libinput_context
-        .udev_assign_seat(session.seat())
+        .udev_assign_seat(&session.seat())
         .map_err(|_| anyhow::anyhow!("Failed to assign seat to libinput"))?;
 
     let libinput_backend = LibinputInputBackend::new(libinput_context.clone());
@@ -75,7 +75,7 @@ pub fn run_drm(event_loop: &mut EventLoop<'static, VibeWM>, state: &mut VibeWM) 
         .insert_source(libinput_backend, |event, _, state| {
             state.process_input_event(event);
         })
-        .context("Failed to insert libinput source")?;
+        .map_err(|e| anyhow::anyhow!("Failed to insert libinput source: {:?}", e))?;
 
     // Log discovered GPUs
     for (device_id, path) in udev_backend.device_list() {
@@ -96,7 +96,7 @@ pub fn run_drm(event_loop: &mut EventLoop<'static, VibeWM>, state: &mut VibeWM) 
                 tracing::info!("GPU removed: {:?}", device_id);
             }
         })
-        .context("Failed to insert udev source")?;
+        .map_err(|e| anyhow::anyhow!("Failed to insert udev source: {:?}", e))?;
 
     // Create a dummy output for now
     // TODO: Actually enumerate DRM outputs and create real ones
@@ -136,7 +136,7 @@ pub fn run_drm(event_loop: &mut EventLoop<'static, VibeWM>, state: &mut VibeWM) 
             state.handle_pending();
             TimeoutAction::ToDuration(Duration::from_millis(16))
         })
-        .context("Failed to insert render timer")?;
+        .map_err(|e| anyhow::anyhow!("Failed to insert render timer: {:?}", e))?;
 
     tracing::info!("DRM backend ready (stub mode - no actual rendering yet)");
     tracing::warn!("DRM rendering not yet implemented - you'll see a blank screen");
