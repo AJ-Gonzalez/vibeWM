@@ -18,11 +18,12 @@ GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Check if running as root (we don't want that)
+# Check if running as root
 if [ "$EUID" -eq 0 ]; then
-    echo -e "${RED}Don't run this script as root!${NC}"
-    echo "Run as your normal user - it will use sudo when needed."
-    exit 1
+    echo -e "${CYAN}Running as root - skipping sudo${NC}"
+    SUDO=""
+else
+    SUDO="sudo"
 fi
 
 # Detect distro
@@ -44,8 +45,8 @@ echo -e "${CYAN}Installing system dependencies...${NC}"
 
 case $DISTRO in
     debian)
-        sudo apt update
-        sudo apt install -y \
+        $SUDO apt update
+        $SUDO apt install -y \
             build-essential \
             pkg-config \
             cmake \
@@ -61,7 +62,7 @@ case $DISTRO in
             curl
         ;;
     fedora)
-        sudo dnf install -y \
+        $SUDO dnf install -y \
             gcc \
             pkg-config \
             cmake \
@@ -77,7 +78,7 @@ case $DISTRO in
             curl
         ;;
     arch)
-        sudo pacman -S --needed \
+        $SUDO pacman -S --needed \
             base-devel \
             pkg-config \
             cmake \
